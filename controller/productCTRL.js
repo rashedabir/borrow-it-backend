@@ -1,10 +1,44 @@
 const Product = require("../model/productModel");
 const Category = require("../model/categoryModel");
 
+class APIfeatures {
+  constructor(query, queryString) {
+    this.query = query;
+    this.queryString = queryString;
+  }
+  filtering() {
+    const queryObj = { ...this.queryString };
+
+    const excludedFields = ["page", "sort", "limit"];
+    excludedFields.forEach((el) => delete queryObj[el]);
+
+    let queryStr = JSON.stringify(queryObj);
+    queryStr = queryStr.replace(
+      /\b(gte|gt|lt|lte|regex)\b/g,
+      (match) => "$" + match
+    );
+    this.query.find(JSON.parse(queryStr));
+
+    return this;
+  }
+
+  paginating() {
+    const page = this.queryString.page * 1 || 1;
+    const limit = this.queryString.limit * 1 || 9;
+    const skip = (page - 1) * limit;
+    this.query = this.query.skip(skip).limit(limit);
+    return this;
+  }
+}
+
 const ProductCTRL = {
   getCategory: async (req, res) => {
     try {
-      const products = await Product.find();
+      const features = new APIfeatures(Product.find(), req.query)
+        .filtering()
+        .paginating();
+
+      const products = await features.query;
       const categories = await Category.find();
       const myArrayFiltered = categories.filter((el) => {
         return products.some((f) => {
