@@ -37,8 +37,8 @@ const userCTRL = {
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        // secure: true,
-        // sameSite: "none",
+        secure: true,
+        sameSite: "none",
       });
 
       res.json({ accessToken });
@@ -80,8 +80,8 @@ const userCTRL = {
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        // secure: true,
-        // sameSite: "none",
+        secure: true,
+        sameSite: "none",
       });
 
       res.json({ accessToken });

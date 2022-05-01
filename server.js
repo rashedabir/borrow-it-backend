@@ -12,7 +12,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:3000", ""],
+    origin: ["http://localhost:3000", "https://borrow-it-99fb7.web.app"],
     credentials: true,
   })
 );
