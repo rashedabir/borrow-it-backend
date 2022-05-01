@@ -52,9 +52,16 @@ const ProductCTRL = {
   },
   getProductBySlug: async (req, res) => {
     try {
-      const products = await Product.find({
-        "category.slug": req.params.slug,
-      });
+      const features = new APIfeatures(
+        Product.find({
+          "category.slug": req.params.slug,
+        }),
+        req.query
+      )
+        .filtering()
+        .paginating();
+
+      const products = await features.query;
       res.json(products);
     } catch (error) {
       return res.status(500).json({ msg: error.message });
