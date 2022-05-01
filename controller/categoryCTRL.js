@@ -20,7 +20,7 @@ const categoryCTRL = {
       if (existingCategory) {
         return res.status(400).json({ msg: "This Category Already Exists" });
       }
-      const slug = slugify(name);
+      const slug = slugify(name.toLowerCase());
       const newCategory = new Category({ name, image, slug });
       await newCategory.save();
       res.json(newCategory);
