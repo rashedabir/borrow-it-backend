@@ -139,7 +139,10 @@ const ProductCTRL = {
       const selectedCategory = await Category.findOne({
         name: product?.category.name,
       });
-      await decreaseProduct(category.name, selectedCategory.totalProduct);
+      await decreaseProduct(
+        selectedCategory.name,
+        selectedCategory.totalProduct
+      );
       res.json({ msg: "Product Deleted" });
     } catch (error) {
       return res.status(500).json({ msg: error.message });
