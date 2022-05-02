@@ -121,6 +121,38 @@ const userCTRL = {
       return res.status(500).json({ msg: error.message });
     }
   },
+  updatePassword: async (req, res) => {
+    try {
+      const { currentPassword, newPassword, confirmPassword } = req.body;
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({ msg: "Invalid Credentials" });
+      }
+      const user = await User.findOne({ _id: req.user.id });
+      if (!user) {
+        return res.status(400).json({ msg: "User not Found" });
+      }
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ msg: "Current Password not Matched" });
+      }
+      if (newPassword.length < 4) {
+        return res.status(400).json({ msg: "Password must be 4 Lengths Long" });
+      }
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({ msg: "Password Doesn't Match" });
+      }
+      const hashPass = await bcrypt.hash(newPassword, 10);
+      await User.findOneAndUpdate(
+        { _id: req.user.id },
+        {
+          password: hashPass,
+        }
+      );
+      res.json({ msg: "Password Changed." });
+    } catch (error) {
+      return res.status(500).json({ msg: error.message });
+    }
+  },
 };
 
 const createAccessToken = (user) => {
