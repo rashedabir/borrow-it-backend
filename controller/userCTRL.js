@@ -2,6 +2,9 @@ const User = require("../model/userModel");
 const Product = require("../model/productModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+var nodemailer = require("nodemailer");
+const hbs = require("nodemailer-express-handlebars");
+const path = require("path");
 
 const userCTRL = {
   register: async (req, res) => {
@@ -144,6 +147,96 @@ const userCTRL = {
       const hashPass = await bcrypt.hash(newPassword, 10);
       await User.findOneAndUpdate(
         { _id: req.user.id },
+        {
+          password: hashPass,
+        }
+      );
+      res.json({ msg: "Password Changed." });
+    } catch (error) {
+      return res.status(500).json({ msg: error.message });
+    }
+  },
+  generateToken: async (req, res) => {
+    try {
+      const { email } = req.body;
+      const token = Math.floor(1000 + Math.random() * 9000);
+      if (!email) {
+        return res.status(400).json({ msg: "Invalid Credentials" });
+      }
+      const user = await User.findOne({ email: email });
+      if (!user) {
+        return res.status(400).json({ msg: "User not Found" });
+      }
+
+      var transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: "rashedkhan1219bd@gmail.com",
+          pass: "01629341869",
+        },
+      });
+
+      // point to the template folder
+      const handlebarOptions = {
+        viewEngine: {
+          partialsDir: path.resolve("./views/"),
+          defaultLayout: false,
+        },
+        viewPath: path.resolve("./views/"),
+      };
+
+      // use a template file with nodemailer
+      transporter.use("compile", hbs(handlebarOptions));
+
+      var mailOptions = {
+        from: '"Borrow it" <rashedkhan1219bd@gmail.com>', // sender address
+        to: email, // list of receivers
+        subject: "Your reset password token!",
+        template: "email", // the name of the template file i.e email.handlebars
+        context: {
+          token: token, // replace {{company}} with My Company
+        },
+      };
+
+      transporter.sendMail(mailOptions, async (error, info) => {
+        if (error) {
+          console.log(error);
+        } else {
+          await User.findOneAndUpdate(
+            { email: email },
+            {
+              passwordResetToken: token,
+            }
+          );
+          res.json({ msg: "Token Sent" });
+        }
+      });
+    } catch (error) {
+      return res.status(500).json({ msg: error.message });
+    }
+  },
+  forgotPassword: async (req, res) => {
+    try {
+      const { email, token, newPassword, confirmPassword } = req.body;
+      if (!email || !token || !newPassword || !confirmPassword) {
+        return res.status(400).json({ msg: "Invalid Credentials" });
+      }
+      const user = await User.findOne({ email: email });
+      if (!user) {
+        return res.status(400).json({ msg: "User not Found" });
+      }
+      if (token !== user.passwordResetToken) {
+        return res.status(400).json({ msg: "Token not Matched" });
+      }
+      if (newPassword.length < 4) {
+        return res.status(400).json({ msg: "Password must be 4 Lengths Long" });
+      }
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({ msg: "Password Doesn't Match" });
+      }
+      const hashPass = await bcrypt.hash(newPassword, 10);
+      await User.findOneAndUpdate(
+        { email: email },
         {
           password: hashPass,
         }

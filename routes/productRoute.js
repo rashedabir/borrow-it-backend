@@ -7,6 +7,8 @@ router
   .post(auth, productCTRL.createProduct)
   .get(productCTRL.getCategory);
 
+router.route("/products").get(productCTRL.getProducts);
+
 router.route("/product/:slug").get(productCTRL.getProductBySlug);
 router.route("/product-details/:id").get(productCTRL.getProductDetails);
 

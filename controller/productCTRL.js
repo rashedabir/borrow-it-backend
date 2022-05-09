@@ -67,6 +67,18 @@ const ProductCTRL = {
       return res.status(500).json({ msg: error.message });
     }
   },
+  getProducts: async (req, res) => {
+    try {
+      const features = new APIfeatures(Product.find(), req.query)
+        .filtering()
+        .paginating();
+
+      const products = await features.query;
+      res.json(products);
+    } catch (error) {
+      return res.status(500).json({ msg: error.message });
+    }
+  },
   getProductDetails: async (req, res) => {
     try {
       const product = await Product.findOne({
