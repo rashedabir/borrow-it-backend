@@ -217,16 +217,13 @@ const userCTRL = {
   },
   forgotPassword: async (req, res) => {
     try {
-      const { email, token, newPassword, confirmPassword } = req.body;
-      if (!email || !token || !newPassword || !confirmPassword) {
+      const { email, newPassword, confirmPassword } = req.body;
+      if (!email || !newPassword || !confirmPassword) {
         return res.status(400).json({ msg: "Invalid Credentials" });
       }
       const user = await User.findOne({ email: email });
       if (!user) {
         return res.status(400).json({ msg: "User not Found" });
-      }
-      if (token !== user.passwordResetToken) {
-        return res.status(400).json({ msg: "Token not Matched" });
       }
       if (newPassword.length < 4) {
         return res.status(400).json({ msg: "Password must be 4 Lengths Long" });
@@ -242,6 +239,21 @@ const userCTRL = {
         }
       );
       res.json({ msg: "Password Changed." });
+    } catch (error) {
+      return res.status(500).json({ msg: error.message });
+    }
+  },
+  verifyToken: async (req, res) => {
+    try {
+      const { token, email } = req.body;
+      if (!token) {
+        return res.status(400).json({ msg: "Invalid Token" });
+      }
+      const user = await User.findOne({ email: email });
+      if (token !== user.passwordResetToken) {
+        return res.status(400).json({ msg: "Token not Matched" });
+      }
+      res.json({ msg: "Matched" });
     } catch (error) {
       return res.status(500).json({ msg: error.message });
     }
