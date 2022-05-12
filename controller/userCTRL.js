@@ -153,11 +153,13 @@ const userCTRL = {
                 passwordResetToken: token,
               }
             );
-            return res.json({ msg: "Token Sent" });
+            return res.status(402).json({ msg: "Token Sent" });
           }
         });
-        // return res.status(402).json({ msg: "Account not active" });
       }
+      // else {
+      //   return res.status(402).json({ msg: "Account not active" });
+      // }
 
       const accessToken = createAccessToken({ id: user._id });
       const refreshToken = createRefreshToken({ id: user._id });
@@ -334,13 +336,25 @@ const userCTRL = {
       if (!user) {
         return res.status(400).json({ msg: "User not Found" });
       }
+      if (token !== user?.passwordResetToken) {
+        return res.status(400).json({ msg: "Token not matched" });
+      }
       await User.findOneAndUpdate(
         { email: email },
         {
           status: true,
         }
       );
-      res.json({ msg: "Account Activated" });
+      const accessToken = createAccessToken({ id: user._id });
+      const refreshToken = createRefreshToken({ id: user._id });
+
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+      });
+
+      res.json({ accessToken });
     } catch (error) {
       return res.status(500).json({ msg: error.message });
     }
