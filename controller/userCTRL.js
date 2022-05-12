@@ -10,6 +10,7 @@ const userCTRL = {
   register: async (req, res) => {
     try {
       const { name, email, password, rePassword } = req.body;
+      const token = Math.floor(1000 + Math.random() * 9000);
 
       if (!name || !email || !password || !rePassword) {
         return res.status(400).json({ msg: "Invalid Creadentials." });
@@ -35,16 +36,50 @@ const userCTRL = {
       });
 
       await newUser.save();
-      const accessToken = createAccessToken({ id: newUser._id });
-      const refreshToken = createRefreshToken({ id: newUser._id });
 
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
+      var transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: "rashedkhan1219bd@gmail.com",
+          pass: "01629341869",
+        },
       });
 
-      res.json({ accessToken });
+      // point to the template folder
+      const handlebarOptions = {
+        viewEngine: {
+          partialsDir: path.resolve("./views/"),
+          defaultLayout: false,
+        },
+        viewPath: path.resolve("./views/"),
+      };
+
+      // use a template file with nodemailer
+      transporter.use("compile", hbs(handlebarOptions));
+
+      var mailOptions = {
+        from: '"Borrow it" <rashedkhan1219bd@gmail.com>', // sender address
+        to: email, // list of receivers
+        subject: "Your reset password token!",
+        template: "email", // the name of the template file i.e email.handlebars
+        context: {
+          token: token, // replace {{company}} with My Company
+        },
+      };
+
+      transporter.sendMail(mailOptions, async (error, info) => {
+        if (error) {
+          console.log(error);
+        } else {
+          await User.findOneAndUpdate(
+            { email: email },
+            {
+              passwordResetToken: token,
+            }
+          );
+          res.json({ msg: "Token Sent" });
+        }
+      });
     } catch (error) {
       return res.status(500).json({ msg: error.message });
     }
@@ -66,6 +101,7 @@ const userCTRL = {
   login: async (req, res) => {
     try {
       const { email, password } = req.body;
+      const token = Math.floor(1000 + Math.random() * 9000);
       if (!email || !password) {
         return res.status(400).json({ msg: "Invalid Creadential." });
       }
@@ -76,6 +112,51 @@ const userCTRL = {
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
         return res.status(400).json({ msg: "Incorrect Password." });
+      }
+
+      var transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: "rashedkhan1219bd@gmail.com",
+          pass: "01629341869",
+        },
+      });
+
+      // point to the template folder
+      const handlebarOptions = {
+        viewEngine: {
+          partialsDir: path.resolve("./views/"),
+          defaultLayout: false,
+        },
+        viewPath: path.resolve("./views/"),
+      };
+
+      // use a template file with nodemailer
+      transporter.use("compile", hbs(handlebarOptions));
+
+      var mailOptions = {
+        from: '"Borrow it" <rashedkhan1219bd@gmail.com>', // sender address
+        to: email, // list of receivers
+        subject: "Your reset password token!",
+        template: "email", // the name of the template file i.e email.handlebars
+        context: {
+          token: token, // replace {{company}} with My Company
+        },
+      };
+
+      if (user.status === false) {
+        return transporter.sendMail(mailOptions, async (error, info) => {
+          if (!error) {
+            await User.findOneAndUpdate(
+              { email: email },
+              {
+                passwordResetToken: token,
+              }
+            );
+            return res.json({ msg: "Token Sent" });
+          }
+        });
+        // return res.status(402).json({ msg: "Account not active" });
       }
 
       const accessToken = createAccessToken({ id: user._id });
@@ -239,6 +320,27 @@ const userCTRL = {
         }
       );
       res.json({ msg: "Password Changed." });
+    } catch (error) {
+      return res.status(500).json({ msg: error.message });
+    }
+  },
+  accountActive: async (req, res) => {
+    try {
+      const { email, token } = req.body;
+      if (!email || !token) {
+        return res.status(400).json({ msg: "Invalid Credentials" });
+      }
+      const user = await User.findOne({ email: email });
+      if (!user) {
+        return res.status(400).json({ msg: "User not Found" });
+      }
+      await User.findOneAndUpdate(
+        { email: email },
+        {
+          status: true,
+        }
+      );
+      res.json({ msg: "Account Activated" });
     } catch (error) {
       return res.status(500).json({ msg: error.message });
     }

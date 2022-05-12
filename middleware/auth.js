@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const User = require("../model/userModel");
 
 const auth = (req, res, next) => {
   try {
@@ -6,8 +7,12 @@ const auth = (req, res, next) => {
     if (!token) {
       return res.status(400).json({ msg: "Invalid Athentication" });
     }
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, user) => {
       if (err) {
+        return res.status(400).json({ msg: "Invalid Athentication" });
+      }
+      const authUser = await User.findOne({ _id: user.id });
+      if (authUser.status === false) {
         return res.status(400).json({ msg: "Invalid Athentication" });
       }
       req.user = user;

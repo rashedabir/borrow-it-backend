@@ -12,5 +12,6 @@ router.post("/change-password", auth, userCTRL.updatePassword);
 router.patch("/generate-token", userCTRL.generateToken);
 router.post("/forgot-password", userCTRL.forgotPassword);
 router.post("/verify-token", userCTRL.verifyToken);
+router.post("/account-active", userCTRL.accountActive);
 
 module.exports = router;
