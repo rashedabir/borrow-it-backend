@@ -41,7 +41,7 @@ const userCTRL = {
         service: "gmail",
         auth: {
           user: "rashedkhan1219bd@gmail.com",
-          pass: "01629341869",
+          pass: "",
         },
       });
 
@@ -118,7 +118,7 @@ const userCTRL = {
         service: "gmail",
         auth: {
           user: "rashedkhan1219bd@gmail.com",
-          pass: "01629341869",
+          pass: "",
         },
       });
 
@@ -255,7 +255,7 @@ const userCTRL = {
         service: "gmail",
         auth: {
           user: "rashedkhan1219bd@gmail.com",
-          pass: "01629341869",
+          pass: "",
         },
       });
 
